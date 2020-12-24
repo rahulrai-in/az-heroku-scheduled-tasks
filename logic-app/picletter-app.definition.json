@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workflows_picletter_app_name": {
+            "defaultValue": "picletter-app",
+            "type": "string"
+        },
+        "heroku_token": {
+            "type": "securestring"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-07-01",
+            "location": "australiasoutheast",
+            "name": "[parameters('workflows_picletter_app_name')]",
+            "properties": {
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "triggers": {
+                        "Recurrence": {
+                            "recurrence": {
+                                "frequency": "Day",
+                                "interval": 1
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "HTTP": {
+                            "type": "Http",
+                            "inputs": {
+                                "body": {
+                                    "command": "worker",
+                                    "size": "standard-1X",
+                                    "time_to_live": 1800
+                                },
+                                "headers": {
+                                    "Accept": "application/vnd.heroku+json; version=3",
+                                    "Authorization": "[concat('Bearer ', parameters('heroku_token'))]",
+                                    "Content-Type": "application/json"
+                                },
+                                "method": "POST",
+                                "uri": "https://api.heroku.com/apps/scheduled-task-demo/dynos"
+                            }
+                        }
+                    }
+                },
+                "state": "Enabled"
+            },
+            "scale": null,
+            "type": "Microsoft.Logic/workflows"
+        }
+    ]
+}
